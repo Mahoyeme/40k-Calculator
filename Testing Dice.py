@@ -12,6 +12,8 @@ def dice_roll(ans):
         #sorts the list by numerical order
         results_list.sort()
         return results_list
+
+
 #modifier application
     #ensures that negative and positive modifiers are correctly applied in accordance with rules
     #takes previously generated list and applies the user variable to each dice result in list
@@ -20,9 +22,14 @@ def modifier_applier(input_list):
     count=0
     #itterates through each dice result in order
     for value in input_list:
-        value= value+mod_value
-        input_list[count]= value
-        count+=1
+        if value==1:
+            count+=1
+            pass
+
+        else:
+            value= value+mod_value
+            input_list[count]= value
+            count+=1
     
     return input_list
 
@@ -53,24 +60,25 @@ def miss_counter(input_results_list):
 
 #reroll
     #takes a previously generated list and allows user to reroll selected values of dice
-def reroll_counter(input_list):
+def reroll_counter(input_list,pass_value):
     #determine if the user wants to reroll all results of '1' or all failed results
-    reroll_type= input("\n1's [1]; All [2]; or None[Enter]: ")
+    reroll_type= input("\n1's [1]; All [2]; or None[0]: ")
+    
+
+
     reroll_list=input_list
     count=0
     #iterate through each result in list
     for reroll in reroll_list:
-        if reroll_type!=1 or 2:
-            pass
-        if reroll_type==1:
+        if int(reroll_type)==1:
             if reroll ==1:
                 #simulate rerolling the dice
                 reroll=random.randint(1,6)
                 print("this",reroll)
                 #Counter places dice back into list
                 reroll_list[count]=reroll
-        if reroll_type==2:
-            if reroll < BS:
+        if int(reroll_type)==2:
+            if reroll < pass_value:
                 #simulate rerolling the dice
                 reroll=random.randint(1,6)
                 #counter places dice back into list
@@ -91,9 +99,33 @@ def wound_list_creator(num_hits):
 
 
 #wound rerolls
+def wound_pass_value(toughness,strength):
+    pass_value=0
+    S=strength
+    T=toughness
+    if S>T:
+        if S>=2*T:
+            print("\n Roll of 2+ is needed to cause Wound.")
+            pass_value=2
+        else: 
+            print("\n Roll of 3+ is needed to cause Wounds.")
+            pass_value=3
+    if S==T: 
+        print("\n Roll of 4+ is needed to cause Wounds.")
+        pass_value=4
+    if T>S:
+        if T>=S*2: 
+            print("\n Roll of 5+ is needed to cause Wounds.")
+            pass_value=5
+        else: 
+            print("\n Roll of 6+ is needed to cause Wounds.")
+            pass_value=6
+    return pass_value
+
 
 def wound_counter(T,S,input_list):
     wounds_count=0
+
     for wound in input_list:
         #dice rolls of 1 are always a failure
         #when Weapon Strength is greater than the targets toughness
@@ -135,6 +167,7 @@ def save_roll_creator(num_wounds):
 def save_test_creator(input_list,AP,save_value):
     saves=0
     failed=0
+    print("A roll of: [", save_value-AP, "+] is needed to Pass Save test.")
     for save in input_list:
         if save-AP>=save_value:
             saves+=1
@@ -174,7 +207,7 @@ while count==1:
         #gather info on available rerolls
     print("\nAny available Rerolls?")
         #feed Results list into reroll function
-    updated_list=reroll_counter(results)
+    updated_list=reroll_counter(results,BS)
         #feed Reroll list into modifier function
     updated_list=modifier_applier(updated_list)
         #show New List with rerolls and Modifiers applied
@@ -187,23 +220,25 @@ while count==1:
     print("\nMiss results: ",miss_results)
     
     #wounds
+    #Info 
+    toughness=int(input("What is targets Toughness?: "))
+    strength=int(input("What is the Weapons Strength?: "))
+    wound_pass=wound_pass_value(toughness,strength)
     Wound_rolls=wound_list_creator(hit_results)
     print("\nWound Rolls: \n",Wound_rolls)
    
    
     #wounds reroll
     print("\nAny Avaiable Rerolls?")
-    Wound_rolls=reroll_counter(Wound_rolls)
+    Wound_rolls=reroll_counter(Wound_rolls,wound_pass)
     Wound_rolls=modifier_applier(Wound_rolls)
     print("\nWound rolls after rerolls: \n",Wound_rolls)
    
     #wounds final
         #gather info on target and weapon
-    toughness=int(input("What is targets Toughness?: "))
-    Strength=int(input("What is the Weapons Strength?: "))
     AP=int(input("What is the Weapon AP value?: "))
         #run wound_counter fucntion
-    num_wounds=wound_counter(toughness,Strength,Wound_rolls)
+    num_wounds=wound_counter(toughness,strength,Wound_rolls)
         #show Number of wounds
     print("Number of wounds: \n",num_wounds)
    
@@ -212,8 +247,13 @@ while count==1:
     Save_roll=save_roll_creator(num_wounds)
         #show Save Roll List
     print("Save roll List: \n",Save_roll)
+        #modify with cover
+    Save_roll=modifier_applier(Save_roll)
+        #show updated save list
+    print("Updated Save list: \n",Save_roll)
         #gather info on targets save value
     save_value=int(input("what is the Targets save value?: "))
+
         #determine if save roll is suffecient
     successful_saves=save_test_creator(Save_roll,AP,save_value)
         #show Successful saves and failed saves
