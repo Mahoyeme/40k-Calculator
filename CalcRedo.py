@@ -194,6 +194,7 @@ def Main():
         dice_list=modifier_applier(dice_list)
         dice_list=wound_counter(dice_list)
         Save_action(dice_list)
+        printto(Messagescreen,"End Of Attack.\nPress 'Enter' To Start New Attack...")
 
     rerollButtons()
     
