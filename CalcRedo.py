@@ -56,7 +56,7 @@ def Main():
                         wound_need="5+"
                         wounds_count+=1
         
-        printto(Hit_MissScreen,"Needed: %s\nWounds: %s"%(wound_need,wounds_count))
+        printto(Stat_screen,"Needed: %s\nWounds: %s"%(wound_need,wounds_count))
         return wounds_count
 
     def Save_action(count):
@@ -74,7 +74,7 @@ def Main():
                 saves+=1
             else:
                 failed+=1
-        printto(Hit_MissScreen,"Saves Made: %s\nNeeded: %s"%(saves,save_need))
+        printto(Stat_screen,"Saves Made: %s\nNeeded: %s"%(saves,save_need))
         return saves
 
     def reroll_action(Input,rerolltype):
@@ -141,7 +141,7 @@ def Main():
     def clearscreen():
         Messagescreen.delete(1.0, "end-1c")
         DiceLog.delete(1.0, "end-1c")
-        Hit_MissScreen.delete(1.0, "end-1c")
+        Stat_screen.delete(1.0, "end-1c")
         
     def printto(where,Text):
         where.delete(1.0, "end-1c")
@@ -167,7 +167,7 @@ def Main():
             elif shot >= int(BSamount.get()):
                 hits+=1
             else: missed +=1
-        printto(Hit_MissScreen, "Hits: %s\nMissed:%s"%(hits,missed))
+        printto(Stat_screen, "Hits: %s\nMissed:%s"%(hits,missed))
         return hits
     
     def modifier_applier(input_list):
@@ -209,12 +209,12 @@ def Main():
     BSamount= tk.Entry()
     BSamount.grid(row=1, column=1,columnspan=3)
     
-    Hit_MissScreen=tk.Label(text="Hits & Misses")
-    Hit_MissScreen.grid(row=0,column=4,padx=10)
-    Hit_MissScreen= tk.Text(root, width = 10, height = 5)
-    Hit_MissScreen.grid(row=1, column= 4, columnspan=1, rowspan=5)
+    Stat_screen=tk.Label(text="Stat Screen")
+    Stat_screen.grid(row=0,column=4,padx=15)
+    Stat_screen= tk.Text(root, width = 10, height = 5)
+    Stat_screen.grid(row=1, column= 4, columnspan=1, rowspan=5)
 
-    Messagescreen = tk.Text(root, width = 30, height = 2)
+    Messagescreen = tk.Text(root, width = 40, height = 2)
     Messagescreen.grid(row=6,column=4,columnspan=2,rowspan=3)
     
     DiceLogLabel=tk.Label(text="Dice Log")
