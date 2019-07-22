@@ -1,20 +1,24 @@
 import random
 import tkinter as tk
 from tkinter import *
+import tk_tools
 
 def Main():
     root=tk.Tk()
-    root.geometry("800x500")
+    root.geometry("650x250")
+    #root.configure(bg="grey")
     rerolltype=IntVar()
     rerolltype2=IntVar()
     rerolltype3=IntVar()
     var=IntVar()
+    invuln=IntVar()
+    Phase=""
 
     def Enter():
         Enterbutton.grid_remove()
-        Nextbutton.grid(row=9,column=1)
+        Nextbutton.grid(column=3)
         action_phase()
-        Enterbutton.grid(row=9,column=0)
+        Enterbutton.grid()
         Nextbutton.grid_remove()
       
     def Next():
@@ -22,18 +26,31 @@ def Main():
         Nextbutton.wait_variable(var)
         Messagescreen.delete(1.0, "end-1c")
 
-    def wound_counter(input_list):
+    def get_Wound_need():
+        T=int(TargetT.get())
+        S=int(WeaponS.get())
+        if S>T: 
+            if S>=2*T:
+                wound_need=2
+            else:
+                wound_need=3
+        elif S==T:
+                wound_need=4
+        elif S<T:
+            if T>=2*S:
+                wound_need=6
+            else:
+                wound_need=5
+        return int(wound_need)
+
+    def wound_counter(Wound_list):
         printto(Messagescreen,"Enter Toughness and Strength values:")
         Next()
-        hits=hit_counter(input_list)
-        wound_rolls=dice_roll(hits)
-        wound_rolls=reroll_action(wound_rolls,rerolltype2)
-        wound_rolls=modifier_applier(wound_rolls)
         wounds_count=0
         T=int(TargetT.get())
         S=int(WeaponS.get())
-        for wound in wound_rolls:
-            if S>T:
+        for wound in Wound_list:
+            if S>T: 
                 if S>=2*T:
                     if wound >= 2:
                         wound_need="2+"
@@ -55,34 +72,53 @@ def Main():
                     if wound >=5:
                         wound_need="5+"
                         wounds_count+=1
-        
         printto(Stat_screen,"Needed: %s\nWounds: %s"%(wound_need,wounds_count))
         return wounds_count
 
-    def Save_action(count):
+    def saves_counter(Saves):
         printto(Messagescreen,"Enter Targets Save Value.")
         Next()
+        is_invuln=int(invuln.get())
         save_value=int(TargetSave.get())
         AP=int(WeaponAP.get())
-        savestomake=dice_roll(count)
-        savestomake=modifier_applier(savestomake)
+        savestomake=Saves
         save_need= save_value+AP
         saves=0
         failed=0
         for save in savestomake:
-            if save-AP>=save_value:
-                saves+=1
+            if is_invuln==1:
+                if save>= save_value:
+                    saves+=1
+                    save_need=save
             else:
-                failed+=1
+                if save-AP>=save_value:
+                    saves+=1
+                else:
+                    failed+=1
         printto(Stat_screen,"Saves Made: %s\nNeeded: %s"%(saves,save_need))
         return saves
 
-    def reroll_action(Input,rerolltype):
-        printto(Messagescreen,"Select Reroll Type.")
+    def showRerolls():
+        rerollLabel.grid(row=8,column=4)
+        NoneButton.grid(row=8,column=5)
+        AllButton.grid(row=8,column=6)
+        OnesButton.grid(row=8,column=7)
         Next()
+        rerollLabel.grid_remove()
+        NoneButton.grid_remove()
+        AllButton.grid_remove()
+        OnesButton.grid_remove()
+
+    def reroll_action(Input,rerolltype,Phase):
+        printto(Messagescreen,"Select Reroll Type.")
+        showRerolls()
         reroll_type=rerolltype.get()
         reroll_list=Input
         count=0
+        if Phase=='Hits':
+            Need=int(BSamount.get())
+        elif Phase=='Wounds':
+            Need=get_Wound_need()
         if reroll_type==0:
             pass
         else:
@@ -92,43 +128,14 @@ def Main():
                         reroll=random.randint(1,6)
                         reroll_list[count]=reroll
                 elif reroll_type==2:
-                    if reroll < int(BSamount.get()):
+                    if reroll < Need:
                         reroll=random.randint(1,6)
                         reroll_list[count]=reroll
                 else: pass
                 count+=1
             reroll_list.sort()
-            hit_counter(reroll_list)
             printto(DiceLog, reroll_list)
         return reroll_list
-
-    def rerollButtons():
-        rerollLabel=tk.Label(None,text="Hit Rerolls::")
-        rerollLabel.grid(row=2, column=0)
-        NoneButton=tk.Radiobutton(None, text="None",value=0,variable=rerolltype, indicatoron=0)
-        NoneButton.grid(row=2,column=1) ,
-        AllButton=tk.Radiobutton(None, text="All Failed", value=2,variable=rerolltype,indicatoron=0)
-        AllButton.grid(row=2,column=2) ,
-        OnesButton=tk.Radiobutton(None, text="Ones", value=1,variable=rerolltype,indicatoron=0)
-        OnesButton.grid(row=2,column=3) 
-
-        rerollLabel=tk.Label(None,text="Wound Rerolls:")
-        rerollLabel.grid(row=3, column=0)
-        NoneButton=tk.Radiobutton(None, text="None",value=0,variable=rerolltype2, indicatoron=0)
-        NoneButton.grid(row=3,column=1) ,
-        AllButton=tk.Radiobutton(None, text="All Failed", value=2,variable=rerolltype2,indicatoron=0)
-        AllButton.grid(row=3,column=2) ,
-        OnesButton=tk.Radiobutton(None, text="Ones", value=1,variable=rerolltype2,indicatoron=0)
-        OnesButton.grid(row=3,column=3) 
-        
-        rerollLabel=tk.Label(None,text="Modifer:")
-        rerollLabel.grid(row=4, column=0)
-        Minusonebutton=tk.Radiobutton(None, text="-1",value=-1,variable=rerolltype3, indicatoron=0)
-        Minusonebutton.grid(row=4,column=1) ,
-        nonemodbutton=tk.Radiobutton(None, text="0", value=0,variable=rerolltype3,indicatoron=0)
-        nonemodbutton.grid(row=4,column=2) ,
-        Plusonebutton=tk.Radiobutton(None, text="+1", value=1,variable=rerolltype3,indicatoron=0)
-        Plusonebutton.grid(row=4,column=3) 
 
     def default():
         diceamount.insert(0,10)
@@ -170,44 +177,120 @@ def Main():
         printto(Stat_screen, "Hits: %s\nMissed:%s"%(hits,missed))
         return hits
     
-    def modifier_applier(input_list):
+    def modifier_applier(input_list,Phase):
         printto(Messagescreen,"Select Modifier Value.")
         Next()
         mod_value=int(rerolltype3.get())
         count=0
-        for value in input_list:
-            if value==1:
-                count+=1
-            else:
-                value+=mod_value
-                input_list[count]= value
-                count+=1
-        printto(DiceLog,input_list)
-        return input_list
+        if Phase=="Saves" and invuln==1:
+            pass
+        else:
+            for value in input_list:
+                if value==1:
+                    count+=1
+                else:
+                    value+=mod_value
+                    input_list[count]= value
+                    count+=1
+            printto(DiceLog,input_list)
+            return input_list
         
     def action_phase():
         clearscreen()
-        dice_list=[]
-        dice_list=dice_roll(int(diceamount.get()))
-        hit_counter(dice_list)
-        dice_list=reroll_action(dice_list,rerolltype)
-        dice_list=modifier_applier(dice_list)
-        dice_list=wound_counter(dice_list)
-        Save_action(dice_list)
+        Step1=To_hit()
+        Step2=To_wound(Step1)
+        To_save(Step2)
         printto(Messagescreen,"End Of Attack.\nPress 'Enter' To Start New Attack...")
 
-    rerollButtons()
+    def To_hit():
+        Phase='Hits'
+        #printto(Messagescreen,"To Hit Phase")
+        Hit_list=dice_roll(int(diceamount.get()))
+        hit_counter(Hit_list)
+        Next()
+        Hit_list=reroll_action(Hit_list,rerolltype,Phase)
+        hit_counter(Hit_list)
+        Next()
+        Hit_list=modifier_applier(Hit_list,Phase)
+        Hits=hit_counter(Hit_list)
+        Next()
+        return Hits
+
+    def To_wound(Hits):
+        Phase='Wounds'
+        Wound_list=dice_roll(Hits)
+        wound_counter(Wound_list)
+        Next()
+        Wound_list=reroll_action(Wound_list,rerolltype,Phase)
+        wound_counter(Wound_list)
+        Next()
+        Wound_list=modifier_applier(Wound_list,Phase)
+        Wounds=wound_counter(Wound_list)
+        return Wounds
+
+    def To_save(Wounds):
+        Phase="Saves"
+        Saves_list=dice_roll(Wounds)
+        saves_counter(Saves_list)
+        Next()
+        Saves_list=modifier_applier(Saves_list,Phase)
+        saves_counter(Saves_list)
+
+
+
+
+
+
+    #rerollButtons()
+    rerollLabel=tk.Label(None,text="Select Rerolls:")
+    #rerollLabel.grid(row=2, column=0)
+    NoneButton=tk.Radiobutton(None, text="None",value=0,variable=rerolltype, indicatoron=0)
+    #NoneButton.grid(row=2,column=1) ,
+    AllButton=tk.Radiobutton(None, text="All Failed", value=2,variable=rerolltype,indicatoron=0)
+    #AllButton.grid(row=2,column=2) ,
+    OnesButton=tk.Radiobutton(None, text="Ones", value=1,variable=rerolltype,indicatoron=0)
+    #OnesButton.grid(row=2,column=3)
+    tk_tools.ToolTip(NoneButton, 'Do not reroll any failed  rolls.')
+    tk_tools.ToolTip(AllButton, 'Reroll all failed rolls.')
+    tk_tools.ToolTip(OnesButton, 'Reroll  results of 1.')
+
+
+    #rerollLabel=tk.Label(None,text="Wound Rerolls:")
+    #rerollLabel.grid(row=3, column=0)
+    NoneButton=tk.Radiobutton(None, text="None",value=0,variable=rerolltype, indicatoron=0)
+    #NoneButton.grid(row=3,column=1) ,
+    AllButton=tk.Radiobutton(None, text="All Failed", value=2,variable=rerolltype,indicatoron=0)
+    #AllButton.grid(row=3,column=2) ,
+    OnesButton=tk.Radiobutton(None, text="Ones", value=1,variable=rerolltype,indicatoron=0)
+    #OnesButton.grid(row=3,column=3) 
+    tk_tools.ToolTip(NoneButton, 'Do not reroll any failed  rolls.')
+    tk_tools.ToolTip(AllButton, 'Reroll all failed rolls.')
+    tk_tools.ToolTip(OnesButton, 'Reroll  results of 1.')
+
     
+    Modlabel=tk.Label(None,text="Modifer:")
+    Modlabel.grid(row=4, column=0)
+    Minusonebutton=tk.Radiobutton(None, text="-1",value=-1,variable=rerolltype3, indicatoron=0,width=4)
+    Minusonebutton.grid(row=4,column=1) ,
+    nonemodbutton=tk.Radiobutton(None, text="0", value=0,variable=rerolltype3,indicatoron=0,width=4)
+    nonemodbutton.grid(row=4,column=2) ,
+    Plusonebutton=tk.Radiobutton(None, text="+1", value=1,variable=rerolltype3,indicatoron=0,width=4)
+    Plusonebutton.grid(row=4,column=3)
+    tk_tools.ToolTip(Minusonebutton,  'Subtract one to dice rolls.')
+    tk_tools.ToolTip(nonemodbutton, 'Do not modify dice rolls.')
+    tk_tools.ToolTip(Plusonebutton, 'Add one to dice rolls\n"1"s still fail.')
 
     diceamountLabel= tk.Label(text="Enter Amount of Shots:")
     diceamountLabel.grid(row=0,column=0)
     diceamount= tk.Entry()
     diceamount.grid(row=0, column=1, columnspan=3)
+    tk_tools.ToolTip(diceamount, 'enter a value between 1 and 100')
 
     BSamountLabel= tk.Label(text="Enter BS:")
     BSamountLabel.grid(row=1,column=0)
     BSamount= tk.Entry()
     BSamount.grid(row=1, column=1,columnspan=3)
+    tk_tools.ToolTip(BSamount, 'enter a value between 2 and 6')
     
     Stat_screen=tk.Label(text="Stat Screen")
     Stat_screen.grid(row=0,column=4,padx=15)
@@ -215,44 +298,48 @@ def Main():
     Stat_screen.grid(row=1, column= 4, columnspan=1, rowspan=5)
 
     Messagescreen = tk.Text(root, width = 40, height = 2)
-    Messagescreen.grid(row=6,column=4,columnspan=2,rowspan=3)
+    Messagescreen.grid(row=6,column=4,columnspan=4,rowspan=2)
     
     DiceLogLabel=tk.Label(text="Dice Log")
     DiceLogLabel.grid(row=0,column=5)
     DiceLog= tk.Text(root, width= 30, height= 5)
-    DiceLog.grid(row=1, column= 5, columnspan=1, rowspan=5)
+    DiceLog.grid(row=1, column= 5, columnspan=3, rowspan=5)
 
     WeaponSLabel=tk.Label(text="Enter Weapons Strength:")
     WeaponSLabel.grid(row=5,column=0)
-    WeaponS=tk.Entry()
-    WeaponS.grid(row=5,column=1,columnspan=3)
+    WeaponS=tk.Entry(width=3)
+    WeaponS.grid(row=5,column=1,columnspan=1)
+    tk_tools.ToolTip(WeaponS, 'enter a numerical Value.')
 
     WeaponAPLabel=tk.Label(text="Enter Weapon's AP:")
-    WeaponAPLabel.grid(row=6,column=0)
-    WeaponAP=tk.Entry()
-    WeaponAP.grid(row=6,column=1,columnspan=3)
+    WeaponAPLabel.grid(row=6,column=0, sticky=E)
+    WeaponAP=tk.Entry(width=3)
+    WeaponAP.grid(row=6,column=1,columnspan=1)
+    tk_tools.ToolTip(WeaponAP, 'enter a positive Number\n(-1 AP = "1")')
 
     TargetTLabel=tk.Label(text="Enter Targets Toughness:")
-    TargetTLabel.grid(row=7,column=0)
-    TargetT=tk.Entry()
-    TargetT.grid(row=7,column=1,columnspan=3)
+    TargetTLabel.grid(row=7,column=0,sticky=E)
+    TargetT=tk.Entry(width=3)
+    TargetT.grid(row=7,column=1,columnspan=1)
+    tk_tools.ToolTip(TargetT, 'enter a numerical Value.')
 
     TargetSaveLabel=tk.Label(text="Enter Targets Save:")
     TargetSaveLabel.grid(row=8,column=0)
-    TargetSave=tk.Entry()
-    TargetSave.grid(row=8,column=1,columnspan=3)
+    TargetSave=tk.Entry(width=3)
+    TargetSave.grid(row=8,column=1,columnspan=1)
+    tk_tools.ToolTip(TargetSave, 'enter a value between 2 and 7')
+
+    #Invuln_SaveLabel=tk.Label(text="Is Invulnerable Save?")
+    #Invuln_SaveLabel.grid(row=9,column=0)
+    Invuln_Save=tk.Checkbutton(root,text="Invuln",variable=invuln)
+    Invuln_Save.grid(row=8,column=2)
 
     Enterbutton=tk.Button(text="Enter", command=Enter)
-    Enterbutton.grid(row=9,column=0)
+    Enterbutton.grid()
     Nextbutton=tk.Button(text="Next", command=lambda: var.set(1))
     #Nextbutton.grid(row=9,column=1)
 
-    
-    
     default()
     root.mainloop()
-    
-
-
 if __name__ == "__main__":
     Main()
